@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Circular Habit Tracker — Printable PDF Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Great+Vibes&family=Caveat:wght@400;600&family=Lora:ital,wght@0,400;0,700;1,400;1,600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    @font-face {
+      font-family: "Alex Brush";
+      src: url("fonts/Alex_Brush/AlexBrush-Regular.ttf") format("truetype");
+      font-weight: 400; font-style: normal; font-display: block;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex; background: #eef0f3; color: #222;
+    }
+
+    /* ——— Sidebar ——— */
+    #sidebar {
+      width: 340px; flex-shrink: 0; background: #fff;
+      border-right: 1px solid #dcdfe4; overflow-y: auto;
+      padding: 18px 18px 90px 18px;
+    }
+    #sidebar h1 { font-size: 16px; font-weight: 600; margin-bottom: 2px; }
+    #sidebar .tag { font-size: 11px; color: #888; margin-bottom: 14px; }
+
+    .section { border-top: 1px solid #eceef1; padding: 14px 0; }
+    .section:first-of-type { border-top: none; padding-top: 0; }
+    .section h2 {
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px;
+      color: #666; margin-bottom: 10px; font-weight: 600;
+    }
+
+    label {
+      display: block; font-size: 11px; color: #777;
+      margin-top: 8px; margin-bottom: 3px;
+    }
+    input[type=text], textarea, select, input[type=number], input[type=file] {
+      width: 100%; padding: 6px 8px; border: 1px solid #ccd;
+      border-radius: 4px; font-size: 13px; font-family: inherit; background: #fff;
+    }
+    input[type=file] { padding: 4px; }
+    input:focus, textarea:focus, select:focus {
+      outline: 2px solid #3b82f6; outline-offset: -1px; border-color: #3b82f6;
+    }
+    textarea { resize: vertical; min-height: 42px; font-size: 12px; }
+
+    .btn {
+      display: inline-block; padding: 6px 12px; border: 1px solid #bbc;
+      background: #f8f9fb; border-radius: 4px; cursor: pointer;
+      font-size: 12px; color: #333;
+    }
+    .btn:hover { background: #eef0f3; }
+    .btn.primary { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+    .btn.primary:hover { background: #2563eb; }
+    .btn.danger { color: #c0302e; }
+    .btn.small { padding: 2px 7px; font-size: 11px; }
+
+    .habit-row {
+      border: 1px solid #e0e0e5; padding: 8px;
+      margin-top: 8px; border-radius: 4px; background: #fafbfc;
+    }
+    .habit-row .top { display: flex; align-items: center; gap: 6px; }
+    .habit-row .top input { flex: 1; }
+    .habit-row textarea { margin-top: 6px; }
+
+    .color-row { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+    .color-row label { margin: 0; flex: 1; font-size: 12px; color: #444; }
+    .color-row input[type=color] {
+      width: 42px; height: 28px; padding: 2px;
+      border: 1px solid #ccd; border-radius: 4px; background: #fff; cursor: pointer;
+    }
+
+    .row2 { display: flex; gap: 8px; }
+    .row2 > * { flex: 1; }
+
+    #print-btn {
+      position: fixed; bottom: 14px; left: 14px; width: 312px;
+      padding: 11px; background: #10b981; color: white; border: none;
+      border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;
+      box-shadow: 0 2px 8px rgba(16,185,129,.3);
+    }
+    #print-btn:hover { background: #059669; }
+
+    /* ——— Preview ——— */
+    #preview {
+      flex: 1; overflow: auto; padding: 24px;
+      display: flex; align-items: flex-start; justify-content: center;
+    }
+    .page {
+      background: #fff; box-shadow: 0 4px 24px rgba(0,0,0,.12);
+      transform-origin: top left;
+    }
+    .page.a4     { width: 210mm;   height: 297mm; }
+    .page.a3     { width: 297mm;   height: 420mm; }
+    .page.letter { width: 215.9mm; height: 279.4mm; }
+    .ht-svg { width: 100%; height: 100%; display: block; user-select: none; }
+    .ht-cell { cursor: pointer; transition: fill .08s; }
+    .ht-cell:hover { filter: brightness(.93); }
+
+    .hint {
+      position: fixed; top: 10px; right: 12px; font-size: 11px; color: #667;
+      background: #fff; padding: 5px 10px; border-radius: 4px;
+      border: 1px solid #dcdfe4;
+    }
+
+    /* ——— Print ——— */
+    @media print {
+      body { background: #fff; display: block; height: auto; }
+      #sidebar, #print-btn, .hint { display: none !important; }
+      #preview { padding: 0; overflow: visible; display: block; }
+      #page-wrapper { width: auto !important; height: auto !important; }
+      .page {
+        box-shadow: none; transform: none !important;
+        margin: 0; page-break-after: avoid;
+      }
+      @page { margin: 0; }
+    }
+  </style>
+  <style id="page-size-style"></style>
+</head>
+<body>
+  <aside id="sidebar">
+    <h1>Circular Habit Tracker</h1>
+    <div class="tag">Design · preview · print as PDF</div>
+
+    <div class="section">
+      <h2>Page</h2>
+      <label>Page size</label>
+      <select id="pageSize">
+        <option value="a3">A3 (297 × 420 mm)</option>
+        <option value="a4">A4 (210 × 297 mm)</option>
+        <option value="letter">US Letter (8.5 × 11 in)</option>
+      </select>
+      <div class="row2">
+        <div>
+          <label>Days in month</label>
+          <input type="number" id="numDays" min="28" max="31" step="1" value="31" />
+        </div>
+        <div>
+          <label>Label column width (×day)</label>
+          <input type="number" id="headerWidth" min="1" max="6" step="1" value="3" />
+        </div>
+      </div>
+      <label>Month preset</label>
+      <div class="row2">
+        <select id="monthPicker">
+          <option value="">— no preset —</option>
+          <option value="1">January</option>
+          <option value="2">February</option>
+          <option value="3">March</option>
+          <option value="4">April</option>
+          <option value="5">May</option>
+          <option value="6">June</option>
+          <option value="7">July</option>
+          <option value="8">August</option>
+          <option value="9">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+        <input type="number" id="yearPicker" min="1900" max="2100" />
+      </div>
+      <div style="font-size:11px; color:#888; margin-top:4px;">Auto-fills subtitle and days in month.</div>
+    </div>
+
+    <div class="section">
+      <h2>Header</h2>
+      <label>Title</label>
+      <input type="text" id="title" />
+      <label>Subtitle (script style)</label>
+      <input type="text" id="subtitle" />
+      <label>Quote / intro</label>
+      <textarea id="quote"></textarea>
+    </div>
+
+    <div class="section">
+      <h2>Habits</h2>
+      <label style="display:flex; align-items:center; gap:6px; color:#333; font-size:12px; margin-top:4px;">
+        <input type="checkbox" id="includeHeaderHabit" />
+        Use outer ring as an extra habit
+      </label>
+      <div id="headerHabitPanel" style="display:none; border:1px solid #e0e0e5; padding:8px; border-radius:4px; margin-top:6px; background:#fafbfc;">
+        <input type="text" id="headerHabitName" placeholder="Extra habit name" />
+        <textarea id="headerHabitDesc" placeholder="Description (shown in legend)" style="margin-top:6px;"></textarea>
+      </div>
+      <label>Column header (when no extra habit)</label>
+      <input type="text" id="header" />
+      <div id="habitsList"></div>
+      <div style="margin-top: 10px;">
+        <button class="btn" id="addHabit">+ Add habit</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Center image</h2>
+      <input type="file" id="centerImageInput" accept="image/*" />
+      <div style="margin-top: 6px;">
+        <button class="btn small" id="clearImage">Remove image</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Colors</h2>
+      <div class="color-row"><label>Ring background</label><input type="color" id="ringFill" /></div>
+      <div class="color-row"><label>Accomplished</label><input type="color" id="onColor" /></div>
+      <div class="color-row"><label>Skipped</label><input type="color" id="skipColor" /></div>
+      <button class="btn small" id="clearCells" style="margin-top: 10px;">Clear all filled cells</button>
+    </div>
+
+    <div class="section">
+      <h2>Saved data</h2>
+      <div style="font-size:11px; color:#888; margin-bottom:6px;">
+        Your design (including filled cells) is auto-saved in this browser.
+      </div>
+      <button class="btn small danger" id="resetAll">Reset to defaults</button>
+    </div>
+  </aside>
+
+  <main id="preview">
+    <div id="page-wrapper">
+      <div class="page a3" id="page"></div>
+    </div>
+  </main>
+
+  <div class="hint">Tip: click a cell to cycle — empty → green → red → empty</div>
+  <button id="print-btn">Print / Save as PDF</button>
+
+  <script>
+    // ——————————————————————————————————————————————————
+    // State
+    // ——————————————————————————————————————————————————
+    const MONTHS = ["January","February","March","April","May","June",
+                    "July","August","September","October","November","December"];
+    const daysInMonth = (m, y) => new Date(y, m, 0).getDate();
+    const STORAGE_KEY = "habitTracker/v1";
+
+    const defaults = () => ({
+      pageSize: "a3",
+      numDays: 30,
+      headerWidth: 3,
+      month: 4,
+      year: 2026,
+      title: "Habit Tracker",
+      subtitle: "April",
+      quote: "Excellence is not a singular act, but a habit. You are what you repeatedly do.",
+      header: "Daily Habit",
+      includeHeaderHabit: false,
+      headerHabit: { name: "Daily Highlight", description: "A special focus or theme for the day." },
+      habits: [
+        { name: "Intentional Morning Start", description: "Starting with structure to create a calm, organized day for everyone." },
+        { name: "Daily Energy Boost",        description: "Investing in vitality through movement to stay strong and present." },
+        { name: "Nourish the Family",        description: "The act of preparing a shared meal — the heart of our daily health." },
+        { name: "Deep Connection Time",      description: "Prioritizing eyes-on, phone-free moments to truly hear our children." },
+        { name: "The Family Table",          description: "Ending the day united. No one eats alone; we grow stronger together." }
+      ],
+      centerImage: "background.jpg",
+      ringFill: "#e8f4fa",
+      onColor:  "#22c55e",
+      skipColor:"#ef4444",
+      cells: {} // key "habitIdx-day" -> "on" | "skip"
+    });
+    const state = defaults();
+
+    // ——— Persistence ———
+    function saveState() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+    }
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        Object.assign(state, parsed);
+        if (!state.headerHabit) state.headerHabit = defaults().headerHabit;
+      } catch (e) {}
+    }
+
+    const PAGES = {
+      a3:     { w: 297,   h: 420,   printSize: "A3" },
+      a4:     { w: 210,   h: 297,   printSize: "A4" },
+      letter: { w: 215.9, h: 279.4, printSize: "letter" }
+    };
+    const PX_PER_MM = 96 / 25.4;
+
+    // ——————————————————————————————————————————————————
+    // Geometry helpers
+    // ——————————————————————————————————————————————————
+    function polar(r, deg) {
+      const rad = (deg * Math.PI) / 180;
+      return { x: r * Math.cos(rad), y: r * Math.sin(rad) };
+    }
+    function fmt(n) { return (+n).toFixed(3); }
+
+    function arcPath(r, startDeg, endDeg) {
+      const s = polar(r, startDeg), e = polar(r, endDeg);
+      const large = Math.abs(endDeg - startDeg) > 180 ? 1 : 0;
+      return `M ${fmt(s.x)} ${fmt(s.y)} A ${r} ${r} 0 ${large} 1 ${fmt(e.x)} ${fmt(e.y)}`;
+    }
+
+    function cellPath(r1, r2, startDeg, endDeg) {
+      const p1 = polar(r1, startDeg), p2 = polar(r2, startDeg);
+      const p3 = polar(r2, endDeg),   p4 = polar(r1, endDeg);
+      return `M ${fmt(p1.x)} ${fmt(p1.y)}
+              L ${fmt(p2.x)} ${fmt(p2.y)}
+              A ${r2} ${r2} 0 0 1 ${fmt(p3.x)} ${fmt(p3.y)}
+              L ${fmt(p4.x)} ${fmt(p4.y)}
+              A ${r1} ${r1} 0 0 0 ${fmt(p1.x)} ${fmt(p1.y)} Z`;
+    }
+
+    function esc(s) {
+      return (s || "").replace(/[<>&"']/g, c =>
+        ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    // ——————————————————————————————————————————————————
+    // Render SVG tracker
+    // ——————————————————————————————————————————————————
+    function renderTracker() {
+      const page = PAGES[state.pageSize];
+      const pageW = page.w, pageH = page.h;
+      const cx = pageW / 2;
+
+      const N = state.habits.length;
+      const D = state.numDays;
+
+      // Header sector (habit-name column) is `headerUnits` day-widths wide.
+      const headerUnits  = Math.max(1, +state.headerWidth || 3);
+      const totalUnits   = D + headerUnits;
+      const unitAngle    = 360 / totalUnits;      // = day sector width
+      const sectorAngle  = unitAngle;
+      const headerAngle  = unitAngle * headerUnits;
+      const headerStart  = -90 - headerAngle / 2;
+      const headerEnd    = -90 + headerAngle / 2;
+      const dayStart0    = headerEnd;             // first day begins here, clockwise
+
+      // Vertical budget: title block (top), tracker (middle), legend (bottom).
+      // All numeric values below are in millimetres (viewBox unit == 1 mm).
+      const legendCount = N + (state.includeHeaderHabit ? 1 : 0);
+      const topMargin   = 22;
+      const titleH      = 42 + topMargin;
+      const legendLineH = Math.min(8, Math.max(5, pageH * 0.016));
+      const legendH     = Math.max(20, legendCount * legendLineH + 20);
+      const availTrackerH = pageH - titleH - legendH - 8;
+      const availTrackerW = pageW - 20;
+      const R_outer = Math.max(30, Math.min(availTrackerW, availTrackerH) / 2 - 4);
+      const cy = titleH + 6 + R_outer;
+
+      const dayRingT      = Math.max(7, R_outer * 0.075);
+      const R_habit_outer = R_outer - dayRingT;
+      const R_center      = R_outer * 0.28;
+      const habitsT       = R_habit_outer - R_center;
+      const perHabit      = habitsT / N;
+
+      const rings = [];
+      for (let i = 0; i <= N; i++) rings.push(R_center + i * perHabit);
+
+      // Label arc is confined to the header column; text auto-shrinks to fit.
+      const labelSpread    = headerAngle / 2;
+      const dayLabelFont   = Math.min(dayRingT * 0.55, 5.2);
+      const maxHabitFont   = Math.min(perHabit * 0.55, 5.5);
+      const headerLabelFont= Math.min(dayRingT * 0.55, 5.5);
+
+      // Estimate a font size that fits a label in the given arc length.
+      // Playfair/serif mean char width ≈ 0.52 × font-size; keep a 10% margin.
+      const fitLabelFont = (name, rMid, maxFont) => {
+        const text = (name || "").trim();
+        if (!text) return maxFont;
+        const arcLen = rMid * (headerAngle * Math.PI / 180) * 0.92;
+        const byFit  = arcLen / (text.length * 0.52);
+        return Math.max(1.5, Math.min(maxFont, byFit));
+      };
+
+      // Title font sizes (in mm, used as unitless SVG user units).
+      const titleFont    = pageW > 240 ? 9  : 7.5;
+      const subtitleFont = pageW > 240 ? 14 : 11;
+      const quoteFont    = pageW > 240 ? 3.3 : 2.8;
+
+      let s = "";
+      s += `<svg class="ht-svg" viewBox="0 0 ${pageW} ${pageH}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">`;
+
+      // Defs: arcs for textPath, clip for center image, radial gradient for cells
+      s += "<defs>";
+      for (let i = 0; i < N; i++) {
+        const rMid = (rings[N - i] + rings[N - 1 - i]) / 2;
+        s += `<path id="habitArc${i}" d="${arcPath(rMid, -90 - labelSpread, -90 + labelSpread)}" fill="none" />`;
+      }
+      const rDayMid = (R_outer + R_habit_outer) / 2;
+      s += `<path id="dayHeaderArc" d="${arcPath(rDayMid, headerStart, headerEnd)}" fill="none" />`;
+      s += `<clipPath id="centerClip"><circle cx="0" cy="0" r="${fmt(R_center - 0.4)}" /></clipPath>`;
+      // Radial gradient: ringFill at inner edge → transparent (≈white) at outer edge.
+      const R_gradOuter = state.includeHeaderHabit ? R_outer : R_habit_outer;
+      const innerStop   = fmt(R_center / R_gradOuter);
+      s += `<radialGradient id="ringGrad" cx="0" cy="0" r="${fmt(R_gradOuter)}" gradientUnits="userSpaceOnUse">
+              <stop offset="${innerStop}" stop-color="${state.ringFill}" stop-opacity="1" />
+              <stop offset="1" stop-color="${state.ringFill}" stop-opacity="0.05" />
+            </radialGradient>`;
+      s += "</defs>";
+
+      // ——— Title block ———
+      s += `<text x="${cx}" y="${topMargin + titleFont + 4}" text-anchor="middle"
+              style="font-family:'Cormorant Garamond',Georgia,serif;
+                     font-size:${titleFont}; font-weight:300; fill:#6b7785;
+                     letter-spacing:1.2px;">${esc(state.title)}</text>`;
+      s += `<text x="${cx}" y="${topMargin + titleFont + subtitleFont + 2}" text-anchor="middle"
+              style="font-family:'Alex Brush','Great Vibes',cursive; font-size:${subtitleFont}; fill:#1a1a1a;">
+              ${esc(state.subtitle)}</text>`;
+      s += `<text x="${cx}" y="${topMargin + titleFont + subtitleFont + quoteFont + 5}" text-anchor="middle"
+              style="font-family:Georgia,serif; font-size:${quoteFont}; fill:#333;">
+              ${esc(state.quote)}</text>`;
+
+      // ——— Tracker ———
+      s += `<g transform="translate(${cx}, ${cy})">`;
+
+      // Habit cells (days 1..D for each habit ring)
+      for (let i = 0; i < N; i++) {
+        const rOut = rings[N - i], rIn = rings[N - 1 - i];
+        for (let d = 1; d <= D; d++) {
+          const a1 = dayStart0 + (d - 1) * sectorAngle;
+          const a2 = dayStart0 + d       * sectorAngle;
+          const key = `${i}-${d}`;
+          const st  = state.cells[key];
+          const fill = st === "on"   ? state.onColor
+                     : st === "skip" ? state.skipColor
+                     :                 "url(#ringGrad)";
+          s += `<path class="ht-cell" data-h="${i}" data-d="${d}"
+                  d="${cellPath(rIn, rOut, a1, a2)}"
+                  fill="${fill}" stroke="#1e1e1e" stroke-width="0.18" />`;
+        }
+        // Habit label sector (no day dividers inside)
+        s += `<path d="${cellPath(rIn, rOut, headerStart, headerEnd)}"
+                fill="url(#ringGrad)" stroke="#1e1e1e" stroke-width="0.22" />`;
+      }
+
+      // Outermost ring: day-number cells (or colorable header-habit cells)
+      for (let d = 1; d <= D; d++) {
+        const a1 = dayStart0 + (d - 1) * sectorAngle;
+        const a2 = dayStart0 + d       * sectorAngle;
+        let fill = "#ffffff", cls = "", dataAttrs = "";
+        if (state.includeHeaderHabit) {
+          const key = `header-${d}`;
+          const st  = state.cells[key];
+          fill = st === "on"   ? state.onColor
+               : st === "skip" ? state.skipColor
+               :                 "url(#ringGrad)";
+          cls = ' class="ht-cell"'; dataAttrs = ` data-h="header" data-d="${d}"`;
+        }
+        s += `<path${cls}${dataAttrs} d="${cellPath(R_habit_outer, R_outer, a1, a2)}"
+                fill="${fill}" stroke="#1e1e1e" stroke-width="0.22" />`;
+      }
+      s += `<path d="${cellPath(R_habit_outer, R_outer, headerStart, headerEnd)}"
+              fill="${state.includeHeaderHabit ? 'url(#ringGrad)' : '#ffffff'}"
+              stroke="#1e1e1e" stroke-width="0.25" />`;
+
+      // Day numbers (rotated along radial)
+      for (let d = 1; d <= D; d++) {
+        const angle = dayStart0 + (d - 0.5) * sectorAngle;
+        const rad = (angle * Math.PI) / 180;
+        const px = rDayMid * Math.cos(rad);
+        const py = rDayMid * Math.sin(rad);
+        const rot = angle + 90;
+        s += `<text x="${fmt(px)}" y="${fmt(py)}"
+                text-anchor="middle" dominant-baseline="central"
+                transform="rotate(${fmt(rot)} ${fmt(px)} ${fmt(py)})"
+                style="font-family:Arial,Helvetica,sans-serif; font-size:${fmt(dayLabelFont)}; fill:#1e1e1e;">${d}</text>`;
+      }
+
+      // Habit names curved on each ring (auto-fit to the header column arc)
+      for (let i = 0; i < N; i++) {
+        const rMidI = (rings[N - i] + rings[N - 1 - i]) / 2;
+        const f = fitLabelFont(state.habits[i].name, rMidI, maxHabitFont);
+        s += `<text style="font-family:'Playfair Display',Georgia,serif;
+                font-size:${fmt(f)}; font-weight:700; fill:#1e1e1e;"
+                text-anchor="middle" dominant-baseline="central">
+                <textPath href="#habitArc${i}" startOffset="50%">${esc(state.habits[i].name)}</textPath>
+              </text>`;
+      }
+
+      // Outer header label: either "Daily Habit" or the extra habit's name
+      const outerLabel = state.includeHeaderHabit
+        ? (state.headerHabit.name || "")
+        : state.header;
+      const headerFit = fitLabelFont(outerLabel, rDayMid, headerLabelFont);
+      s += `<text style="font-family:'Playfair Display',Georgia,serif;
+              font-size:${fmt(headerFit)}; font-weight:700; fill:#1e1e1e;"
+              text-anchor="middle" dominant-baseline="central">
+              <textPath href="#dayHeaderArc" startOffset="50%">${esc(outerLabel)}</textPath>
+            </text>`;
+
+      // Center circle + optional image
+      s += `<circle cx="0" cy="0" r="${fmt(R_center)}" fill="#ffffff"
+              stroke="#1e1e1e" stroke-width="0.3" />`;
+      if (state.centerImage) {
+        const imgSize = R_center * 2 * 0.96;
+        s += `<image href="${state.centerImage}"
+                x="${fmt(-imgSize/2)}" y="${fmt(-imgSize/2)}"
+                width="${fmt(imgSize)}" height="${fmt(imgSize)}"
+                preserveAspectRatio="xMidYMid meet"
+                clip-path="url(#centerClip)" />`;
+      }
+
+      s += "</g>"; // end tracker
+
+      // ——— Legend ———
+      let legendY = cy + R_outer + 18 + legendLineH * 0.85;
+      const legendX = 16;
+      const legendFont = Math.min(pageW * 0.018, legendLineH * 0.72);
+      const legendItems = state.includeHeaderHabit
+        ? [state.headerHabit, ...state.habits]
+        : state.habits;
+      for (const h of legendItems) {
+        s += `<text x="${legendX}" y="${fmt(legendY)}"
+                style="font-family:'Lora',Georgia,serif; font-size:${fmt(legendFont)}; fill:#1e1e1e;">
+                <tspan font-weight="700">${esc(h.name)}</tspan>
+                <tspan font-style="italic"> : ${esc(h.description)}</tspan>
+              </text>`;
+        legendY += legendLineH;
+      }
+
+      s += "</svg>";
+      document.getElementById("page").innerHTML = s;
+      saveState();
+
+      // Click to fill cells (supports both numeric habit index and "header" row)
+      document.querySelectorAll(".ht-cell").forEach(el => {
+        el.addEventListener("click", () => {
+          const k = `${el.dataset.h}-${el.dataset.d}`;
+          const cur = state.cells[k];
+          if (!cur) state.cells[k] = "on";
+          else if (cur === "on") state.cells[k] = "skip";
+          else delete state.cells[k];
+          renderTracker();
+        });
+      });
+    }
+
+    // ——————————————————————————————————————————————————
+    // Habits list UI
+    // ——————————————————————————————————————————————————
+    function renderHabits() {
+      const list = document.getElementById("habitsList");
+      list.innerHTML = "";
+      state.habits.forEach((h, i) => {
+        const div = document.createElement("div");
+        div.className = "habit-row";
+        div.innerHTML = `
+          <div class="top">
+            <input type="text" placeholder="Habit name" data-field="name" data-idx="${i}" value="${esc(h.name)}" />
+            <button class="btn small" data-up="${i}" title="Move up">↑</button>
+            <button class="btn small" data-down="${i}" title="Move down">↓</button>
+            <button class="btn small danger" data-remove="${i}" title="Remove">×</button>
+          </div>
+          <textarea placeholder="Description (shown in legend)" data-field="description" data-idx="${i}">${esc(h.description)}</textarea>
+        `;
+        list.appendChild(div);
+      });
+
+      list.querySelectorAll("input[data-field], textarea[data-field]").forEach(el => {
+        el.addEventListener("input", () => {
+          const idx = +el.dataset.idx, f = el.dataset.field;
+          state.habits[idx][f] = el.value;
+          renderTracker();
+        });
+      });
+      list.querySelectorAll("[data-remove]").forEach(el => {
+        el.addEventListener("click", () => {
+          const idx = +el.dataset.remove;
+          if (state.habits.length <= 1) return;
+          state.habits.splice(idx, 1);
+          // Re-index cells
+          const nc = {};
+          Object.entries(state.cells).forEach(([k, v]) => {
+            const [h, d] = k.split("-").map(Number);
+            if (h < idx)      nc[`${h}-${d}`]     = v;
+            else if (h > idx) nc[`${h - 1}-${d}`] = v;
+          });
+          state.cells = nc;
+          renderHabits(); renderTracker();
+        });
+      });
+      list.querySelectorAll("[data-up]").forEach(el => {
+        el.addEventListener("click", () => swapHabits(+el.dataset.up, +el.dataset.up - 1));
+      });
+      list.querySelectorAll("[data-down]").forEach(el => {
+        el.addEventListener("click", () => swapHabits(+el.dataset.down, +el.dataset.down + 1));
+      });
+    }
+    function swapHabits(a, b) {
+      if (a < 0 || b < 0 || a >= state.habits.length || b >= state.habits.length) return;
+      [state.habits[a], state.habits[b]] = [state.habits[b], state.habits[a]];
+      const nc = {};
+      Object.entries(state.cells).forEach(([k, v]) => {
+        const [h, d] = k.split("-").map(Number);
+        let nh = h;
+        if (h === a) nh = b; else if (h === b) nh = a;
+        nc[`${nh}-${d}`] = v;
+      });
+      state.cells = nc;
+      renderHabits(); renderTracker();
+    }
+
+    // ——————————————————————————————————————————————————
+    // Scaling & page size
+    // ——————————————————————————————————————————————————
+    function updateScale() {
+      const page = document.getElementById("page");
+      const wrap = document.getElementById("page-wrapper");
+      const prev = document.getElementById("preview");
+      const p = PAGES[state.pageSize];
+      const wPx = p.w * PX_PER_MM, hPx = p.h * PX_PER_MM;
+      const availW = prev.clientWidth  - 48;
+      const availH = prev.clientHeight - 48;
+      const scale = Math.min(availW / wPx, availH / hPx, 1);
+      page.style.transform = `scale(${scale})`;
+      wrap.style.width  = (wPx * scale) + "px";
+      wrap.style.height = (hPx * scale) + "px";
+    }
+
+    function updatePageSizeStyle() {
+      const s = document.getElementById("page-size-style");
+      const p = PAGES[state.pageSize];
+      s.textContent = `@media print { @page { size: ${p.printSize}; margin: 0; } }`;
+      document.getElementById("page").className = "page " + state.pageSize;
+    }
+
+    // ——————————————————————————————————————————————————
+    // Controls binding
+    // ——————————————————————————————————————————————————
+    function bindControls() {
+      const bind = (id, prop, evt = "input") => {
+        const el = document.getElementById(id);
+        el.value = state[prop];
+        el.addEventListener(evt, () => {
+          let v = el.value;
+          if (el.type === "number") {
+            v = +v;
+            if (id === "numDays") v = Math.max(28, Math.min(31, v || 31));
+          if (id === "headerWidth") v = Math.max(1, Math.min(6, v || 3));
+          }
+          state[prop] = v;
+          if (id === "pageSize") { updatePageSizeStyle(); updateScale(); }
+          renderTracker();
+        });
+      };
+      bind("pageSize", "pageSize", "change");
+      bind("numDays",  "numDays");
+      bind("headerWidth", "headerWidth");
+
+      // Month / year preset
+      const monthEl = document.getElementById("monthPicker");
+      const yearEl  = document.getElementById("yearPicker");
+      monthEl.value = state.month || "";
+      yearEl.value  = state.year;
+      const applyMonthYear = () => {
+        const m = +monthEl.value;
+        const y = +yearEl.value || new Date().getFullYear();
+        state.year = y;
+        if (!m) { state.month = null; renderTracker(); return; }
+        state.month    = m;
+        state.numDays  = daysInMonth(m, y);
+        state.subtitle = MONTHS[m - 1];
+        document.getElementById("numDays").value  = state.numDays;
+        document.getElementById("subtitle").value = state.subtitle;
+        renderTracker();
+      };
+      monthEl.addEventListener("change", applyMonthYear);
+      yearEl.addEventListener("input",  applyMonthYear);
+      bind("title",    "title");
+      bind("subtitle", "subtitle");
+      bind("quote",    "quote");
+      bind("header",   "header");
+      bind("ringFill", "ringFill");
+      bind("onColor",  "onColor");
+      bind("skipColor","skipColor");
+
+      const chk = document.getElementById("includeHeaderHabit");
+      const panel = document.getElementById("headerHabitPanel");
+      const hName = document.getElementById("headerHabitName");
+      const hDesc = document.getElementById("headerHabitDesc");
+      chk.checked = state.includeHeaderHabit;
+      panel.style.display = state.includeHeaderHabit ? "" : "none";
+      hName.value = state.headerHabit.name;
+      hDesc.value = state.headerHabit.description;
+      chk.addEventListener("change", () => {
+        state.includeHeaderHabit = chk.checked;
+        panel.style.display = chk.checked ? "" : "none";
+        if (!chk.checked) {
+          // Remove any header-row cells so switching back doesn't leak state.
+          Object.keys(state.cells).forEach(k => {
+            if (k.startsWith("header-")) delete state.cells[k];
+          });
+        }
+        renderTracker();
+      });
+      hName.addEventListener("input", () => { state.headerHabit.name = hName.value; renderTracker(); });
+      hDesc.addEventListener("input", () => { state.headerHabit.description = hDesc.value; renderTracker(); });
+
+      document.getElementById("addHabit").addEventListener("click", () => {
+        state.habits.push({ name: "New habit", description: "Describe this habit for the legend." });
+        renderHabits(); renderTracker();
+      });
+
+      document.getElementById("centerImageInput").addEventListener("change", e => {
+        const f = e.target.files[0];
+        if (!f) return;
+        const r = new FileReader();
+        r.onload = ev => { state.centerImage = ev.target.result; renderTracker(); };
+        r.readAsDataURL(f);
+      });
+      document.getElementById("clearImage").addEventListener("click", () => {
+        state.centerImage = null;
+        document.getElementById("centerImageInput").value = "";
+        renderTracker();
+      });
+      document.getElementById("clearCells").addEventListener("click", () => {
+        state.cells = {}; renderTracker();
+      });
+
+      document.getElementById("print-btn").addEventListener("click", () => window.print());
+
+      document.getElementById("resetAll").addEventListener("click", () => {
+        if (!confirm("Reset everything — title, habits, colors, filled cells, image?")) return;
+        try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+        location.reload();
+      });
+    }
+
+    // ——————————————————————————————————————————————————
+    // Boot
+    // ——————————————————————————————————————————————————
+    window.addEventListener("load", () => {
+      loadState();
+      bindControls();
+      updatePageSizeStyle();
+      renderHabits();
+      renderTracker();
+      updateScale();
+    });
+    window.addEventListener("resize", updateScale);
+  </script>
+</body>
+</html>
