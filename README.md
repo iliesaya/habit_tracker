@@ -2,6 +2,8 @@
 
 A single-file web app that generates **printable circular habit trackers** — concentric rings for each habit, one cell per day of the month, designed to be printed on A3 / A4 / US Letter paper and filled in by hand (or clicked directly in the browser).
 
+**Live demo:** https://iliesaya.github.io/habit_tracker/
+
 ![Screenshot](screenshot.jpg)
 
 ## Features
