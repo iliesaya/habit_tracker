@@ -112,6 +112,24 @@
       border: 1px solid #dcdfe4;
     }
 
+    /* ——— Mobile / narrow screens ——— */
+    @media (max-width: 768px) {
+      body { flex-direction: column; height: auto; min-height: 100vh; }
+      #sidebar {
+        width: 100%; max-height: 45vh;
+        border-right: none; border-bottom: 1px solid #dcdfe4;
+        padding-bottom: 16px;
+      }
+      #preview {
+        padding: 12px; padding-bottom: 80px;
+        align-items: flex-start;
+      }
+      #print-btn {
+        left: 12px; right: 12px; width: auto; bottom: 12px;
+      }
+      .hint { display: none; }
+    }
+
     /* ——— Print ——— */
     @media print {
       body { background: #fff; display: block; height: auto; }
