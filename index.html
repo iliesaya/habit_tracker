@@ -112,6 +112,23 @@
       border: 1px solid #dcdfe4;
     }
 
+    /* ——— Dashboard / collapse-menu mode ——— */
+    #toggleSidebar {
+      position: fixed; top: 10px; left: 10px; z-index: 30;
+      width: 30px; height: 30px; padding: 0; border-radius: 4px;
+      border: 1px solid #ccd; background: #fff; color: #333;
+      cursor: pointer; font-size: 16px; line-height: 1;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    }
+    #toggleSidebar:hover { background: #eef0f3; }
+    body.dashboard #sidebar,
+    body.dashboard .hint { display: none !important; }
+    body.dashboard #preview { padding: 12px; }
+    body.dashboard #print-btn {
+      left: auto; right: 14px; bottom: 14px; width: auto; padding: 8px 14px;
+    }
+    body.dashboard #toggleSidebar { left: 10px; }
+
     /* ——— Mobile / narrow screens ——— */
     @media (max-width: 768px) {
       body { flex-direction: column; height: auto; min-height: 100vh; }
@@ -250,6 +267,7 @@
   </main>
 
   <div class="hint">Tip: click a cell to cycle — empty → green → red → empty</div>
+  <button id="toggleSidebar" title="Toggle menu (dashboard mode)" aria-label="Toggle menu">≡</button>
   <button id="print-btn">Print / Save as PDF</button>
 
   <script>
@@ -743,6 +761,15 @@
       });
 
       document.getElementById("print-btn").addEventListener("click", () => window.print());
+
+      const toggleBtn = document.getElementById("toggleSidebar");
+      const DASH_KEY = "habitTracker/dashboard";
+      if (localStorage.getItem(DASH_KEY) === "1") document.body.classList.add("dashboard");
+      toggleBtn.addEventListener("click", () => {
+        const on = document.body.classList.toggle("dashboard");
+        try { localStorage.setItem(DASH_KEY, on ? "1" : "0"); } catch (e) {}
+        updateScale();
+      });
 
       document.getElementById("resetAll").addEventListener("click", () => {
         if (!confirm("Reset everything — title, habits, colors, filled cells, image?")) return;
