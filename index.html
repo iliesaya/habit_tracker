@@ -261,8 +261,14 @@
       <h2>Saved data</h2>
       <div style="font-size:11px; color:#888; margin-bottom:6px;">
         Your design (including filled cells) is auto-saved in this browser.
+        Export to a file to keep multiple calendars.
       </div>
-      <button class="btn small danger" id="resetAll">Reset to defaults</button>
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <button class="btn small" id="exportConfig">Export to file</button>
+        <button class="btn small" id="importConfig">Load from file</button>
+        <button class="btn small danger" id="resetAll">Reset</button>
+      </div>
+      <input type="file" id="importConfigFile" accept="application/json,.json" style="display:none;" />
     </div>
   </aside>
 
@@ -806,6 +812,42 @@
         if (!confirm("Reset everything — title, habits, colors, filled cells, image?")) return;
         try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
         location.reload();
+      });
+
+      document.getElementById("exportConfig").addEventListener("click", () => {
+        const data = JSON.stringify(state, null, 2);
+        const blob = new Blob([data], { type: "application/json" });
+        const url  = URL.createObjectURL(blob);
+        const slug = `${state.subtitle || "calendar"}-${state.year || ""}`
+                       .toLowerCase().replace(/[^a-z0-9]+/g, "-")
+                       .replace(/^-|-$/g, "");
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `habit-tracker-${slug || "config"}.json`;
+        document.body.appendChild(a); a.click(); a.remove();
+        URL.revokeObjectURL(url);
+      });
+
+      const importInput = document.getElementById("importConfigFile");
+      document.getElementById("importConfig").addEventListener("click", () => importInput.click());
+      importInput.addEventListener("change", (e) => {
+        const f = e.target.files[0];
+        if (!f) return;
+        const r = new FileReader();
+        r.onload = (ev) => {
+          try {
+            const parsed = JSON.parse(ev.target.result);
+            if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.habits)) {
+              throw new Error("file doesn't look like a habit-tracker config");
+            }
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+            location.reload();
+          } catch (err) {
+            alert("Could not load config: " + err.message);
+          }
+        };
+        r.readAsText(f);
+        importInput.value = "";
       });
     }
 
