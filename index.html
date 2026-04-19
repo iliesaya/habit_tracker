@@ -227,7 +227,10 @@
         Use outer ring as an extra habit
       </label>
       <div id="headerHabitPanel" style="display:none; border:1px solid #e0e0e5; padding:8px; border-radius:4px; margin-top:6px; background:#fafbfc;">
-        <input type="text" id="headerHabitName" placeholder="Extra habit name" />
+        <div style="display:flex; align-items:center; gap:6px;">
+          <input type="text" id="headerHabitName" placeholder="Extra habit name" style="flex:1;" />
+          <button class="btn small" id="headerHabitDown" title="Swap with next habit">↓</button>
+        </div>
         <textarea id="headerHabitDesc" placeholder="Description (shown in legend)" style="margin-top:6px;"></textarea>
       </div>
       <label>Column header (when no extra habit)</label>
@@ -626,12 +629,36 @@
         });
       });
       list.querySelectorAll("[data-up]").forEach(el => {
-        el.addEventListener("click", () => swapHabits(+el.dataset.up, +el.dataset.up - 1));
+        el.addEventListener("click", () => {
+          const idx = +el.dataset.up;
+          if (idx === 0 && state.includeHeaderHabit) swapHeaderWithFirst();
+          else swapHabits(idx, idx - 1);
+        });
       });
       list.querySelectorAll("[data-down]").forEach(el => {
         el.addEventListener("click", () => swapHabits(+el.dataset.down, +el.dataset.down + 1));
       });
     }
+    function swapHeaderWithFirst() {
+      if (!state.includeHeaderHabit || state.habits.length === 0) return;
+      const tmp = state.headerHabit;
+      state.headerHabit = state.habits[0];
+      state.habits[0]   = tmp;
+      const nc = {};
+      Object.entries(state.cells).forEach(([k, v]) => {
+        const dash = k.indexOf("-");
+        const h = k.slice(0, dash), d = k.slice(dash + 1);
+        if (h === "header")   nc[`0-${d}`]       = v;
+        else if (h === "0")   nc[`header-${d}`]  = v;
+        else                  nc[k]              = v;
+      });
+      state.cells = nc;
+      document.getElementById("headerHabitName").value = state.headerHabit.name;
+      document.getElementById("headerHabitDesc").value = state.headerHabit.description;
+      renderHabits();
+      renderTracker();
+    }
+
     function swapHabits(a, b) {
       if (a < 0 || b < 0 || a >= state.habits.length || b >= state.habits.length) return;
       [state.habits[a], state.habits[b]] = [state.habits[b], state.habits[a]];
@@ -741,6 +768,7 @@
       });
       hName.addEventListener("input", () => { state.headerHabit.name = hName.value; renderTracker(); });
       hDesc.addEventListener("input", () => { state.headerHabit.description = hDesc.value; renderTracker(); });
+      document.getElementById("headerHabitDown").addEventListener("click", swapHeaderWithFirst);
 
       document.getElementById("addHabit").addEventListener("click", () => {
         state.habits.push({ name: "New habit", description: "Describe this habit for the legend." });
