@@ -294,23 +294,26 @@
     const defaults = () => ({
       pageSize: "a3",
       numDays: 30,
-      headerWidth: 3,
+      headerWidth: 4,
       month: 4,
       year: 2026,
-      title: "Habit Tracker",
+      title: "Adam Habit Tracker",
       subtitle: "April",
-      quote: "Excellence is not a singular act, but a habit. You are what you repeatedly do.",
+      quote: "Little by little, through every small mission, I am becoming a Big Boy Hero.",
       header: "Daily Habit",
-      includeHeaderHabit: false,
-      headerHabit: { name: "Daily Highlight", description: "A special focus or theme for the day." },
+      includeHeaderHabit: true,
+      headerHabit: {
+        name: "Brave Bedroom Sleep",
+        description: "Staying in my own bed all night long like a big, brave boy."
+      },
       habits: [
-        { name: "Intentional Morning Start", description: "Starting with structure to create a calm, organized day for everyone." },
-        { name: "Daily Energy Boost",        description: "Investing in vitality through movement to stay strong and present." },
-        { name: "Nourish the Family",        description: "The act of preparing a shared meal — the heart of our daily health." },
-        { name: "Deep Connection Time",      description: "Prioritizing eyes-on, phone-free moments to truly hear our children." },
-        { name: "The Family Table",          description: "Ending the day united. No one eats alone; we grow stronger together." }
+        { name: "Listening Ears",    description: "Following directions the first time with a happy heart and a calm voice." },
+        { name: "Discovery Time",    description: "Focusing my brain on reading, writing, or building something amazing." },
+        { name: "Strong Body Fuel",  description: "Fueling my body with healthy food to help my muscles and brain grow." },
+        { name: "Kind Protector",    description: "Being a gentle and helpful big brother who keeps his little sister safe." },
+        { name: "Smart Screen Time", description: "Enjoying a little TV time, then happily turning it off to go play." }
       ],
-      centerImage: "background.jpg",
+      centerImage: "background.png",
       ringFill: "#e8f4fa",
       onColor:  "#22c55e",
       skipColor:"#ef4444",
