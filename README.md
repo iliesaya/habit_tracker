@@ -25,7 +25,7 @@ A single-file web app that generates **printable circular habit trackers** — c
 
 ## Usage
 
-Open `index.html` in a modern browser — that's it. No build step, no server, no dependencies beyond Google Fonts (Playfair Display, Lora, Cormorant Garamond, Great Vibes) and a bundled `Alex Brush` TTF for the month subtitle.
+Open `index.html` in a modern browser — that's it. No build step, no server, no local dependencies; all fonts (Playfair Display, Lora, Cormorant Garamond, Great Vibes, Alex Brush) are loaded from Google Fonts.
 
 To export a PDF:
 
@@ -36,8 +36,7 @@ To export a PDF:
 
 ```
 index.html                           — the entire app (HTML + CSS + JS)
-background.jpg                       — default center decoration
-fonts/Alex_Brush/                    — script font used for the month subtitle
+background.png                       — default center decoration
 circular-habit-tracker_april_b_a3.pdf — reference PDF that inspired the layout
 screenshot.jpg                       — preview used in this README
 ```
