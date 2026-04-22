@@ -35,10 +35,9 @@ To export a PDF:
 ## File layout
 
 ```
-index.html                           — the entire app (HTML + CSS + JS)
-background.png                       — default center decoration
-circular-habit-tracker_april_b_a3.pdf — reference PDF that inspired the layout
-screenshot.jpg                       — preview used in this README
+index.html      — the entire app (HTML + CSS + JS)
+background.png  — default center decoration
+screenshot.jpg  — preview used in this README
 ```
 
 ## How it works (briefly)
